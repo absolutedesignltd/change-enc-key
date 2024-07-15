@@ -19,10 +19,16 @@ for i in "${PATHS[@]}"; do
 done
 echo "Generated ${#DECRYPTS[@]} re-encrypt commands for n98"
 
+echo "Generating and setting new crypt key"
+NEWKEY=$(pwgen 32 1)
+echo $NEWKEY
+php n98-magerun2.phar config:env:set crypt.key ${NEWKEY}
+
 echo "Re-encrypting content"
 FIND="config:store:set"
 REPLACEMENT="config:store:set --encrypt"
 for d in "${DECRYPTS[@]}"; do
         CMD="$(echo "$d" | sed "s/$FIND/$REPLACEMENT/")"
+        echo $CMD
         php n98-magerun2.phar $CMD || true
 done
