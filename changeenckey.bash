@@ -54,9 +54,6 @@ NEWKEY=$(pwgen 32 1)
 echo $NEWKEY
 php n98-magerun2.phar config:env:set crypt.key ${NEWKEY}
 
-echo "Re-enabling config cache"
-php n98-magerun2.phar cache:enable config
-
 echo "Re-encrypting content"
 FIND="config:store:set"
 REPLACEMENT="config:store:set --encrypt"
@@ -66,3 +63,6 @@ for d in "${DECRYPTS[@]}"; do
         CMD=${CMD//\'/}
         php n98-magerun2.phar $CMD || true
 done
+
+echo "Re-enabling config cache"
+php n98-magerun2.phar cache:enable config
