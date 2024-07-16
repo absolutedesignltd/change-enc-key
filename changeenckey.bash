@@ -90,9 +90,7 @@ FIND="config:store:set"
 REPLACEMENT="config:store:set --encrypt"
 for d in "${DECRYPTS[@]}"; do
         CMD="$(echo "$d" | sed "s/$FIND/$REPLACEMENT/")"
-        #For some reason the output command has single quotes which go into the db so remove those
-        CMD=${CMD//\'/}
-        php n98-magerun2.phar $CMD || true
+        eval "php n98-magerun2.phar ${CMD}"
 done
 
 echo "Running setup upgrade"
