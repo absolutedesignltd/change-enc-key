@@ -13,7 +13,7 @@ then
     exit 1
 fi
 
-read -p "!!! Have you backed up the database (y/n)? " answer
+read -p "!!! Have you disabled crons (y/n)? " answer
 case ${answer:0:1} in
     y|Y )
         echo "OK, continuing"
@@ -23,8 +23,26 @@ case ${answer:0:1} in
     ;;
 esac
 
-echo "!!! Make a note of the current crypt key:"
-php n98-magerun2.phar config:env:show crypt.key
+echo "Enabling maintenance mode"
+php n98-magerun2.phar maint:enable
+
+echo "Backing up core config data table"
+php n98-magerun2.phar db:dump --include core_config_data -c gzip coreconf_cryptkey_backup.sql
+
+if ! [ -e coreconf_cryptkey_backup.sql.gz ]
+then
+    echo "DB backup missing, exiting"
+    exit 1
+fi
+
+echo "Making a note of the current crypt key in file cryptbak.txt"
+php n98-magerun2.phar config:env:show crypt.key >> cryptbak.txt
+
+if ! [ -e cryptbak.txt ]
+then
+    echo "Cryptkey backup missing, exiting"
+    exit 1
+fi
 
 echo "Finding paths which are encrypted and need updating"
 PATHS=$(php n98-magerun2.phar db:query "select distinct(path) from core_config_data where value like '0:3:%';")
@@ -46,6 +64,16 @@ for i in "${PATHS[@]}"; do
 done
 echo "Generated ${#DECRYPTS[@]} re-encrypt commands for n98"
 
+read -p "Last chance to pray to god(s)/science - continue (y/n)? " answer
+case ${answer:0:1} in
+    y|Y )
+        echo "OK, continuing"
+    ;;
+    * )
+        exit 1
+    ;;
+esac
+
 echo "Disabling config cache to prevent conflict when key is replaced"
 php n98-magerun2.phar cache:disable config
 
@@ -53,6 +81,9 @@ echo "Generating and setting new crypt key"
 NEWKEY=$(pwgen 32 1)
 echo $NEWKEY
 php n98-magerun2.phar config:env:set crypt.key ${NEWKEY}
+
+echo "Re-enabling config cache"
+php n98-magerun2.phar cache:enable config
 
 echo "Re-encrypting content"
 FIND="config:store:set"
@@ -64,5 +95,7 @@ for d in "${DECRYPTS[@]}"; do
         php n98-magerun2.phar $CMD || true
 done
 
-echo "Re-enabling config cache"
-php n98-magerun2.phar cache:enable config
+echo "Running setup upgrade"
+php -d memory_limit=1G bin/magento setup:upgrade
+
+echo "Please re-enable crons, deploy static, disable maintenance mode, and test site"
