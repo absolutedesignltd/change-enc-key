@@ -7,7 +7,7 @@ Generates random new crypt key and replaces the existing one
 NO WARRANTY! Always back up database first.
 
 ## Requirements
-Requires N98-magerun2 in project root
+Requires N98-magerun2 in project root -make sure it's the most recent release for your M2/php version
 
 Requires pwgen installed on server
 
