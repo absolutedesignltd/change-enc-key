@@ -5,6 +5,15 @@ if ! command -v pwgen &> /dev/null
 then
     echo -n "Please install pwgen or enter a key of 32 chars (numbers and letters):"
     read NEWKEY
+    if [ ${#NEWKEY} != 32 ];then
+        echo "The key must be 32 chars"
+	exit 1
+    fi
+    if ! [[ "$NEWKEY" =~ ^[-0-9a-zA-Z]*$ ]];then
+	    echo "the key must be numbers and letters"
+	    exit 1
+    fi
+
 fi
 
 if ! [ -e n98-magerun2.phar ]
